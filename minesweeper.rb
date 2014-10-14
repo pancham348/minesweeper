@@ -1,69 +1,47 @@
-
-class Board
-  BOMBS = 8
+require './tile'
+require './board'
+class Game 
+  attr_accessor :board 
   def initialize
-    @board = Array.new(9) { Array.new(9) }
-    populate_board
+    @board = Board.new
   end
   
-  def populate_board
-    bomb_indices = choose_bomb_indices
-
-    @board.each_index do |i|
-      @board.each_index do |j|
-        @board[i][j] = Tile.new(self)
-        if bomb_indices.include?([i , j])
-          @board[i][j].bomb = true 
-        end
+  def run
+    until win? || lose?
+      @board.display
+      puts "Please choose a square: (put input in [x,y] format)"
+      @user_input = gets.chomp
+      if @user_input.start_with?("f")
+        @user_input = @user_input[1..-1].split(',').map { |num| num.to_i}
+        @board.board[@user_input[0]][@user_input[1]].flag
+      else
+        @user_input = @user_input.split(',').map { |num| num.to_i}
+        @user_input.delete_if {|item| ('a'..'z').to_a.include?(item)}
+        @board.board[@user_input[0]][@user_input[1]].reveal
       end
     end
     
-  end
-  
-  def display
-    @board.each do |row|
-      row_display = row.map { |tile| tile.mark }
-      p row_display
+    if win?
+      puts "You win!"
+    elsif lose?
+      puts "You lose!"
     end
-  end
-  
-  def choose_bomb_indices
-    bomb_indices = []
     
-    while bomb_indices.length < BOMBS
-      index = [rand(9), rand(9)]
-      
-      unless bomb_indices.include?(index)
-        bomb_indices << index
-      end
-    end
-    bomb_indices
+    puts "Game over!"
   end
   
-  
-end
-
-class Tile
-  
-  attr_accessor :bomb
-  def initialize(board, bomb = false)
-    @bomb = bomb
-    @revealed
-    @flagged
-    @board = board
+  def win? 
+    @board.board.flatten.all? { |tile| tile.revealed || tile.bomb }
   end
   
-  def mark
-    if @bomb == false
-      return '_'
-    else
-      return 'b'
-    end      
+  def lose?
+    @board.board.flatten.any? { |tile| tile.revealed && tile.bomb }
   end
 end
 
-board = Board.new
-board.display
+game = Game.new
+game.run
+
 
 
 
